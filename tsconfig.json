@@ -20,7 +20,9 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "target": "ES2022",
-    "module": "preserve"
+    "module": "preserve",
+    "lib": ["ES2022", "DOM"],
+    "useDefineForClassFields": true
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
