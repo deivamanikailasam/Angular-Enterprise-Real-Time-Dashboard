@@ -12,6 +12,13 @@
     "isolatedModules": true,
     "experimentalDecorators": true,
     "importHelpers": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "target": "ES2022",
     "module": "preserve"
   },
