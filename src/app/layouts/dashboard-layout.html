@@ -1,0 +1,170 @@
+<div class="flex h-screen bg-gray-100">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-gray-900 text-white shadow-lg">
+      <div class="p-6 border-b border-gray-700">
+        <h1 class="text-2xl font-bold">Dashboard</h1>
+      </div>
+
+      <nav class="mt-8 space-y-2 px-4">
+        @if (authGuard.hasAdminRole()) {
+          <a
+            routerLink="/admin/metrics"
+            routerLinkActive="bg-blue-600"
+            class="block px-4 py-2 rounded hover:bg-gray-700 transition"
+          >
+            <mat-icon class="inline mr-2">settings</mat-icon>
+            Metrics Management
+          </a>
+        }
+
+        @if (authGuard.canEditDashboard()) {
+          <a
+            routerLink="/dashboard/customize"
+            routerLinkActive="bg-blue-600"
+            class="block px-4 py-2 rounded hover:bg-gray-700 transition"
+          >
+            <mat-icon class="inline mr-2">tune</mat-icon>
+            Customize Layout
+          </a>
+        }
+
+        <a
+          routerLink="/dashboard/view"
+          routerLinkActive="bg-blue-600"
+          class="block px-4 py-2 rounded hover:bg-gray-700 transition"
+        >
+          <mat-icon class="inline mr-2">dashboard</mat-icon>
+          View Metrics
+        </a>
+
+        <a
+          routerLink="/dashboard/alerts"
+          routerLinkActive="bg-blue-600"
+          class="block px-4 py-2 rounded hover:bg-gray-700 transition"
+        >
+          <mat-icon class="inline mr-2">notifications</mat-icon>
+          Alerts
+        </a>
+      </nav>
+
+      <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-700">
+        <div class="text-sm text-gray-400">
+          User: {{ authGuard.currentUser$()?.email }}
+        </div>
+        <div class="text-xs text-gray-500">
+          Role: {{ authGuard.currentUser$()?.roles?.join(', ') ?? 'N/A' }}
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Top Navigation Bar -->
+      <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="flex items-center justify-between px-8 py-4">
+          <div class="flex items-center gap-4">
+            <h2 class="text-xl font-semibold text-gray-900">
+              {{ tenantService.tenantName() }}
+            </h2>
+
+            @if (authGuard.hasAdminRole()) {
+              <select
+                (change)="onTenantChange($event)"
+                [value]="tenantService.activeTenant$()?.id"
+                class="px-3 py-2 border border-gray-300 rounded bg-white"
+              >
+                @for (tenant of tenantService.availableTenants$(); track tenant.id) {
+                  <option [value]="tenant.id">{{ tenant.name }}</option>
+                }
+              </select>
+            }
+          </div>
+
+          <div class="flex items-center gap-4">
+            <!-- Notifications Indicator -->
+            <button
+              class="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition"
+            >
+              <mat-icon>notifications</mat-icon>
+              @if (criticalMetricsCount().length > 0) {
+                <span
+                  class="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full"
+                >
+                  {{ criticalMetricsCount() }}
+                </span>
+              }
+            </button>
+
+            <!-- User Menu -->
+            <button [matMenuTriggerFor]="userMenu" class="flex items-center gap-2">
+              <mat-icon>account_circle</mat-icon>
+              <span class="text-sm font-medium">
+                {{ authGuard.currentUser$()?.email ? authGuard.currentUser$()?.email?.split('@')?.[0] ?? '' : '' }}
+              </span>
+            </button>
+            <mat-menu #userMenu="matMenu">
+              <button mat-menu-item (click)="onProfile()">
+                <mat-icon>person</mat-icon>
+                <span>Profile</span>
+              </button>
+              <button mat-menu-item (click)="onSettings()">
+                <mat-icon>settings</mat-icon>
+                <span>Settings</span>
+              </button>
+              <mat-divider></mat-divider>
+              <button mat-menu-item (click)="onLogout()">
+                <mat-icon>logout</mat-icon>
+                <span>Logout</span>
+              </button>
+            </mat-menu>
+          </div>
+        </div>
+
+        <!-- Health Status Bar -->
+        <div class="bg-gradient-to-r from-green-50 to-blue-50 px-8 py-3 border-t border-gray-100">
+          <div class="flex items-center justify-between text-sm">
+            <div class="flex gap-8">
+              <div>
+                <span class="font-semibold text-gray-900">
+                  {{ dashboardHealth().total }}
+                </span>
+                <span class="text-gray-600 ml-2">Total Metrics</span>
+              </div>
+              <div>
+                <span
+                  class="font-semibold"
+                  [class.text-green-600]="dashboardHealth().critical === 0"
+                  [class.text-red-600]="dashboardHealth().critical > 0"
+                >
+                  {{ dashboardHealth().healthy }}
+                </span>
+                <span class="text-gray-600 ml-2">Healthy</span>
+              </div>
+              <div>
+                <span
+                  class="font-semibold"
+                  [class.text-red-600]="dashboardHealth().critical > 0"
+                >
+                  {{ dashboardHealth().critical }}
+                </span>
+                <span class="text-gray-600 ml-2">Critical</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-lg font-bold text-gray-900">
+                {{ dashboardHealth().healthPercentage | number: '1.0-0' }}%
+              </div>
+              <div class="text-gray-600">System Health</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Content Area -->
+      <main class="flex-1 overflow-auto">
+        <div class="p-8">
+          <router-outlet></router-outlet>
+        </div>
+      </main>
+    </div>
+  </div>

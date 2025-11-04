@@ -44,7 +44,7 @@ export class DashboardStoreService {
   });
 
   readonly layoutForTenant = computed(() => {
-    const tenant = this.tenantId();
+    // const tenant = this.tenantId();
     return this.layout().filter(w => w.metricId);
   });
 
@@ -78,11 +78,11 @@ export class DashboardStoreService {
     });
 
     // Effect: Auto-clear errors after 5 seconds
-    effect(() => {
+    effect((onCleanup) => {
       const err = this.error();
       if (err) {
         const timeout = setTimeout(() => this.error.set(null), 5000);
-        return () => clearTimeout(timeout);
+        onCleanup(() => clearTimeout(timeout));
       }
     });
   }

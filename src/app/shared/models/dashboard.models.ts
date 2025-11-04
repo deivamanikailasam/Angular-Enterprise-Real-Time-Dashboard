@@ -45,3 +45,18 @@ export interface MetricDataPoint {
     maxUsers: number;
   }
   
+  export interface AuthUser {
+    id: string;
+    email: string;
+    roles: UserRole[];
+    tenantId: string;
+    token?: string;
+  }
+  
+  export interface DemoUser {
+    email: string;
+    password: string;
+    id: string;
+    roles: UserRole[];
+    tenantId: string;
+  }
