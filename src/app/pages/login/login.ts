@@ -7,7 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { AuthGuard } from '../../core/guards/auth';
+import { AuthService } from '../../core/services/auth';
 import { Subject, takeUntil } from 'rxjs';
 
 @Component({
@@ -142,7 +142,7 @@ export class LoginPage implements OnInit, OnDestroy {
    */
 
   constructor(
-    private authGuard: AuthGuard,
+    private authService: AuthService,
     private router: Router,
     private formBuilder: FormBuilder
   ) {
@@ -195,7 +195,7 @@ export class LoginPage implements OnInit, OnDestroy {
    * Prevents already-logged-in users from accessing login page
    */
   private checkExistingAuthentication(): void {
-    if (this.authGuard.isAuthenticated$()) {
+    if (this.authService.isAuthenticated$()) {
       this.router.navigate(['/dashboard/view']);
     }
   }
@@ -308,8 +308,8 @@ export class LoginPage implements OnInit, OnDestroy {
    */
   private performLogin(email: string, password: string, rememberMe: boolean): void {
     try {
-      // Attempt authentication via authGuard
-      const result = this.authGuard.login(email, password);
+      // Attempt authentication via authService
+      const result = this.authService.login(email, password);
 
       if (result.success) {
         // Store remember-me preference if checked

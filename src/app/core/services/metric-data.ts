@@ -3,6 +3,7 @@ import { signal, effect } from '@angular/core';
 import { DashboardMetric, MetricDataPoint } from '../../shared/models/dashboard.model';
 import { WebSocketService } from './websocket';
 import { CacheService } from './cache';
+import { AdvancedCacheService } from './advanced-cache';
 
 @Injectable({
   providedIn: 'root',
@@ -13,7 +14,8 @@ export class MetricsDataService {
 
   constructor(
     private wsService: WebSocketService,
-    private cacheService: CacheService
+    private cacheService: CacheService,
+    private advancedCacheService: AdvancedCacheService
   ) {
     this.initializeMetrics();
     this.setupWebSocketListener();
@@ -244,5 +246,19 @@ export class MetricsDataService {
 
   disconnectWebSocket(): void {
     this.wsService.disconnect();
+  }
+
+  // Add this method to MetricsDataService class:
+
+  invalidateMetricCache(metricId: string): void {
+    this.cacheService.invalidate(`metric-${metricId}`);
+  }
+
+  invalidateAllMetricsCache(): void {
+    this.advancedCacheService.invalidateByTag('metrics');
+  }
+
+  getCacheStats() {
+    return this.advancedCacheService.getStats();
   }
 }

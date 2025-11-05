@@ -4,7 +4,7 @@ import { DashboardLayout } from './layouts/dashboard-layout';
 import { LoginPage } from './pages/login/login';
 import { UnauthorizedPage } from './pages/unauthorized';
 import { MetricsViewPage } from './pages/metric-view/metrics-view';
-import { CustomizeDashboardPage } from './pages/customize-dashboard';
+import { CustomizeDashboardPage } from './pages/customize-dashboard/customize-dashboard';
 import { AlertsPage } from './pages/alerts';
 
 export const routes: Routes = [

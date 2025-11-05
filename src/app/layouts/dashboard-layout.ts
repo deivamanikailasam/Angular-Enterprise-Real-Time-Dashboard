@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, Signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { AuthGuard } from '../core/guards/auth';
+import { AuthService } from '../core/services/auth';
 import { TenantService } from '../core/services/tenant';
 import { DashboardStoreService } from '../core/services/dashboard-store';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -38,7 +38,7 @@ interface DashboardHealth {
 })
 export class DashboardLayout implements OnInit {
   constructor(
-    public authGuard: AuthGuard,
+    public authService: AuthService,
     public tenantService: TenantService,
     private dashboardStore: DashboardStoreService
   ) {}
@@ -56,7 +56,7 @@ export class DashboardLayout implements OnInit {
     if (tenantId) {
       this.dashboardStore.setTenantId(tenantId);
       this.dashboardStore.setUserRole(
-        this.authGuard.currentUser$()?.roles[0] ?? 'viewer'
+        this.authService.currentUser$()?.roles[0] ?? 'viewer'
       );
     }
   }
@@ -91,7 +91,7 @@ export class DashboardLayout implements OnInit {
   onLogout(): void {
     const confirmed = confirm('Are you sure you want to logout?');
     if (confirmed) {
-      this.authGuard.logout();
+      this.authService.logout();
       // authService.logout() already navigates to login
     }
   }

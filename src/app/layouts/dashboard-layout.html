@@ -46,7 +46,7 @@
 
     <nav class="flex-1 overflow-y-auto px-3 pb-4">
       <div class="space-y-2">
-        @if (authGuard.hasAdminRole()) {
+        @if (authService.hasAdminRole()) {
           <a
             routerLink="/admin/metrics"
             routerLinkActive="active-link"
@@ -62,7 +62,7 @@
           </a>
         }
 
-        @if (authGuard.canEditDashboard()) {
+        @if (authService.canEditDashboard()) {
           <a
             routerLink="/dashboard/customize"
             routerLinkActive="active-link"
@@ -109,10 +109,10 @@
     <div class="relative z-10 mt-auto border-t border-slate-800/50 bg-gradient-to-r from-slate-800/50 to-slate-900/50 px-4 py-3 backdrop-blur">
       <div class="text-xs uppercase tracking-[0.3em] text-slate-400 font-semibold mb-1">Signed in</div>
       <div class="text-xs font-bold text-white truncate">
-        {{ authGuard.currentUser$()?.email }}
+        {{ authService.currentUser$()?.email }}
       </div>
       <div class="mt-0.5 text-xs text-slate-400 truncate">
-        Role: {{ authGuard.currentUser$()?.roles?.join(', ') ?? 'N/A' }}
+        Role: {{ authService.currentUser$()?.roles?.join(', ') ?? 'N/A' }}
       </div>
     </div>
   </aside>
@@ -128,7 +128,7 @@
                 {{ tenantService.tenantName() }}
               </h2>
 
-              @if (authGuard.hasAdminRole()) {
+              @if (authService.hasAdminRole()) {
                 <button
                   [matMenuTriggerFor]="tenantMenu"
                   class="group flex items-center gap-2.5 rounded-lg border border-slate-700 bg-slate-800/50 px-3 py-1.5 text-sm font-medium text-slate-200 shadow-lg transition hover:border-slate-600 hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-blue-500/30"
@@ -178,7 +178,7 @@
               >
                 <mat-icon class="text-base !leading-none !m-0 flex items-center justify-center">account_circle</mat-icon>
               </span>
-              <span class="hidden sm:inline whitespace-nowrap text-xs leading-normal">{{ authGuard.currentUser$()?.email ? authGuard.currentUser$()?.email?.split('@')?.[0] ?? '' : '' }}</span>
+              <span class="hidden sm:inline whitespace-nowrap text-xs leading-normal">{{ authService.currentUser$()?.email ? authService.currentUser$()?.email?.split('@')?.[0] ?? '' : '' }}</span>
               <mat-icon class="text-base text-blue-400 transition group-hover:text-blue-300 shrink-0 flex items-center justify-center w-4 h-4">expand_more</mat-icon>
             </button>
 

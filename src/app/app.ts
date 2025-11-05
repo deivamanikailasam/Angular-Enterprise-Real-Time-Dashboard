@@ -3,7 +3,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { RouterOutlet, Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { AuthGuard } from './core/guards/auth';
+import { AuthService } from './core/services/auth';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
@@ -14,19 +14,19 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 })
 export class App {
   private readonly titleService = inject(Title);
-  private readonly authGuard = inject(AuthGuard);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   protected readonly title = signal('Angular - Enterprise Real-Time Dashboard');
-  protected readonly isInitializing = this.authGuard.isInitialized$;
+  protected readonly isInitializing = this.authService.isInitialized$;
   protected readonly isNavigating = signal(false);
 
   constructor() {
     this.titleService.setTitle(this.title());
     
-    // Pre-initialize AuthGuard immediately to speed up guard checks
+    // Pre-initialize AuthService immediately to speed up guard checks
     // This ensures authentication state is ready before any navigation
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
-      this.authGuard.initialize();
+      this.authService.initialize();
     }
     
     // Track navigation events to show loading during route transitions
