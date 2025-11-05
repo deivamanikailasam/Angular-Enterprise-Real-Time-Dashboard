@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { signal, computed } from '@angular/core';
-import { TenantConfig } from '../../shared/models/dashboard.models';
+import { TenantConfig } from '../../shared/models/dashboard.model';
 
 @Injectable({
   providedIn: 'root',

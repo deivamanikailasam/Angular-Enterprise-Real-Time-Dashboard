@@ -1,0 +1,161 @@
+<mat-card class="h-full bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50 shadow-lg hover:shadow-xl transition-shadow">
+    <mat-card-content class="p-6">
+      <!-- Header -->
+      <div class="flex items-start justify-between mb-4">
+        <div>
+          <h3 class="text-lg font-semibold text-white">{{ metric.name }}</h3>
+          <p class="text-sm text-slate-400">{{ metric.description }}</p>
+        </div>
+        <div
+          [class.bg-emerald-900/30]="metric.trend === 'stable'"
+          [class.bg-rose-900/30]="metric.trend === 'down'"
+          [class.bg-blue-900/30]="metric.trend === 'up'"
+          class="p-2 rounded-lg border border-slate-700/50"
+        >
+          <mat-icon
+            [class.text-emerald-400]="metric.trend === 'stable'"
+            [class.text-rose-400]="metric.trend === 'down'"
+            [class.text-blue-400]="metric.trend === 'up'"
+          >
+            @switch (metric.trend) {
+              @case ('up') {
+                trending_up
+              }
+              @case ('down') {
+                trending_down
+              }
+              @default {
+                trending_flat
+              }
+            }
+          </mat-icon>
+        </div>
+      </div>
+
+      <!-- Current Value -->
+      <div class="mb-4">
+        <div class="text-4xl font-bold text-white">
+          {{ metric.currentValue | number: '1.0-2' }}
+        </div>
+        <div class="text-sm text-slate-400">{{ metric.unit }}</div>
+      </div>
+
+      <!-- Threshold Indicators -->
+      @if (metric.threshold) {
+        <div class="mb-4 space-y-2">
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">Status</span>
+            <span
+              [class.text-emerald-400]="!isThresholdExceeded()"
+              [class.text-yellow-400]="isWarningThreshold()"
+              [class.text-rose-400]="isCriticalThreshold()"
+            >
+              {{ statusLabel() }}
+            </span>
+          </div>
+          <mat-progress-bar
+            [value]="progressPercentage()"
+            [color]="progressColor()"
+          ></mat-progress-bar>
+        </div>
+      }
+
+      <!-- Chart -->
+      <div class="bg-slate-900/50 rounded-lg border border-slate-700/50 h-32 flex items-center justify-center mb-4 relative overflow-hidden">
+        @if (chartPath() && chartPath().length > 0) {
+          <svg 
+            [attr.viewBox]="chartViewBox()" 
+            class="w-full h-full"
+            preserveAspectRatio="none"
+            style="display: block;"
+          >
+            <!-- Gradient definition for line -->
+            <defs>
+              <linearGradient [attr.id]="'chart-gradient-' + metric.id" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" [attr.stop-color]="isCriticalThreshold() ? '#f43f5e' : (isWarningThreshold() ? '#eab308' : '#10b981')" stop-opacity="0.3" />
+                <stop offset="100%" [attr.stop-color]="isCriticalThreshold() ? '#f43f5e' : (isWarningThreshold() ? '#eab308' : '#10b981')" stop-opacity="0.05" />
+              </linearGradient>
+            </defs>
+            
+            <!-- Threshold lines (behind chart) -->
+            @if (metric.threshold && metric.dataPoints.length > 0) {
+              @let minVal = minValue();
+              @let maxVal = maxValue();
+              @let range = maxVal - minVal || 1;
+              @let chartAreaHeight = chartHeight - padding.top - padding.bottom;
+              @let warningY = chartHeight - padding.bottom - ((metric.threshold.warning - minVal) / range) * chartAreaHeight;
+              @let criticalY = chartHeight - padding.bottom - ((metric.threshold.critical - minVal) / range) * chartAreaHeight;
+              
+              <line
+                x1="0"
+                [attr.y1]="warningY"
+                x2="200"
+                [attr.y2]="warningY"
+                stroke="#eab308"
+                stroke-width="1"
+                stroke-dasharray="3,3"
+                opacity="0.4"
+              />
+              <line
+                x1="0"
+                [attr.y1]="criticalY"
+                x2="200"
+                [attr.y2]="criticalY"
+                stroke="#f43f5e"
+                stroke-width="1"
+                stroke-dasharray="3,3"
+                opacity="0.4"
+              />
+            }
+            
+            <!-- Area fill under line -->
+            @if (chartPath()) {
+              @let pathData = chartPath();
+              @let bottomY = chartHeight - padding.top;
+              @let rightX = chartWidth - padding.right;
+              @let leftX = padding.left;
+              @let areaPath = pathData + ' L ' + rightX + ' ' + bottomY + ' L ' + leftX + ' ' + bottomY + ' Z';
+              <path
+                [attr.d]="areaPath"
+                [attr.fill]="'url(#chart-gradient-' + metric.id + ')'"
+              />
+            }
+            
+            <!-- Main line -->
+            <path
+              [attr.d]="chartPath()"
+              fill="none"
+              [attr.stroke]="isCriticalThreshold() ? '#f43f5e' : (isWarningThreshold() ? '#eab308' : '#10b981')"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        } @else {
+          <div class="text-sm text-slate-500">
+            @if (metric && metric.dataPoints && metric.dataPoints.length > 0) {
+              <span>Generating chart...</span>
+            } @else {
+              <span>No data available</span>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Footer Stats -->
+      <div class="grid grid-cols-2 gap-4 border-t border-slate-700/50 pt-4">
+        <div>
+          <div class="text-xs text-slate-400">Min</div>
+          <div class="text-lg font-semibold text-white">
+            {{ minValue() | number: '1.0-2' }}
+          </div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-400">Max</div>
+          <div class="text-lg font-semibold text-white">
+            {{ maxValue() | number: '1.0-2' }}
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>

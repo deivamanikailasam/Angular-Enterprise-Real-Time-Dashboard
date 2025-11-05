@@ -12,6 +12,7 @@ export interface MetricDataPoint {
     currentValue: number;
     trend: 'up' | 'down' | 'stable';
     threshold?: { warning: number; critical: number };
+    unit: string;
   }
   
   export interface DashboardLayout {

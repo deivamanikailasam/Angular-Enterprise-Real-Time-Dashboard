@@ -7,7 +7,7 @@ import {
   UrlTree,
 } from '@angular/router';
 import { signal, computed, inject } from '@angular/core';
-import { AuthUser, DemoUser, UserRole } from '../../shared/models/dashboard.models';
+import { AuthUser, DemoUser, UserRole } from '../../shared/models/dashboard.model';
 import { isPlatformBrowser } from '@angular/common';
 
 @Injectable({

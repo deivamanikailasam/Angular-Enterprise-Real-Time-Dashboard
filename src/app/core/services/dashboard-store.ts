@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { signal, computed, effect } from '@angular/core';
-import { DashboardMetric, WidgetConfig } from '../../shared/models/dashboard.models';
+import { DashboardMetric, WidgetConfig } from '../../shared/models/dashboard.model';
 
 @Injectable({
   providedIn: 'root',
