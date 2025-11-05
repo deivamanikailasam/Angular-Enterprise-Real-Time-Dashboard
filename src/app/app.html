@@ -1,3 +1,13 @@
-<div class="flex h-screen bg-gray-900 text-white">
-  <router-outlet></router-outlet>
-</div>
+@if (!isInitializing() || isNavigating()) {
+  <div class="fixed inset-0 z-[9999] flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div class="flex flex-col items-center gap-4">
+      <mat-spinner diameter="60" class="!text-blue-500"></mat-spinner>
+      <p class="text-slate-300 text-sm font-medium">@if (!isInitializing()) { Initializing... } @else { Loading... }</p>
+    </div>
+  </div>
+}
+@if (isInitializing() && !isNavigating()) {
+  <div class="flex h-screen bg-gray-900 text-white">
+    <router-outlet></router-outlet>
+  </div>
+}

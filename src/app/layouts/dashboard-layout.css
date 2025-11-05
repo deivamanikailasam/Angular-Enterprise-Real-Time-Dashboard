@@ -1,4 +1,301 @@
-:host {
-    display: block;
-    height: 100%;
+﻿:host {
+  display: block;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.nav-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
+  color: rgb(203 213 225);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: all 0.25s ease;
+  border: 1px solid transparent;
+}
+
+.nav-link .nav-label {
+  white-space: nowrap;
+  flex: 1;
+  line-height: 1.5;
+}
+
+.nav-link:hover {
+  background: linear-gradient(135deg, rgb(30 41 59) 0%, rgb(15 23 42) 100%);
+  color: rgb(255 255 255);
+  transform: translateX(4px);
+  border-color: rgb(59 130 246 / 0.3);
+}
+
+.nav-link .nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  width: 2rem;
+  min-width: 2rem;
+  flex-shrink: 0;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, rgb(30 58 138) 0%, rgb(37 99 235) 100%);
+  color: rgb(191 219 254);
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.nav-link .nav-icon mat-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+.nav-icon--accent {
+  background: linear-gradient(135deg, rgb(88 28 135) 0%, rgb(147 51 234) 100%);
+  color: rgb(233 213 255);
+  box-shadow: 0 2px 8px rgba(147, 51, 234, 0.3);
+}
+
+.nav-icon--info {
+  background: linear-gradient(135deg, rgb(14 116 144) 0%, rgb(56 189 248) 100%);
+  color: rgb(186 230 253);
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.3);
+}
+
+.nav-icon--alert {
+  background: linear-gradient(135deg, rgb(153 27 27) 0%, rgb(244 63 94) 100%);
+  color: rgb(254 205 211);
+  box-shadow: 0 2px 8px rgba(244, 63, 94, 0.3);
+}
+
+.nav-link:hover .nav-icon {
+  background: linear-gradient(135deg, rgb(59 130 246) 0%, rgb(96 165 250) 100%);
+  color: rgb(255 255 255);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  transform: scale(1.05);
+}
+
+.nav-link:hover .nav-icon--accent {
+  background: linear-gradient(135deg, rgb(147 51 234) 0%, rgb(168 85 247) 100%);
+  color: rgb(255 255 255);
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.4);
+}
+
+.nav-link:hover .nav-icon--info {
+  background: linear-gradient(135deg, rgb(56 189 248) 0%, rgb(125 211 252) 100%);
+  color: rgb(255 255 255);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+}
+
+.nav-link:hover .nav-icon--alert {
+  background: linear-gradient(135deg, rgb(244 63 94) 0%, rgb(251 113 133) 100%);
+  color: rgb(255 255 255);
+  box-shadow: 0 4px 12px rgba(244, 63, 94, 0.4);
+}
+
+.nav-link .nav-caret {
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: all 0.25s ease;
+  font-size: 1rem;
+  width: 1rem;
+  height: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: rgb(148 163 184);
+  margin-left: auto;
+}
+
+.nav-link:hover .nav-caret,
+.nav-link.active-link .nav-caret {
+  opacity: 1;
+  transform: translateX(0);
+  color: rgb(96 165 250);
+}
+
+.nav-link .nav-indicator {
+  position: absolute;
+  left: 0.5rem;
+  top: 12%;
+  bottom: 12%;
+  width: 0.35rem;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgb(96 165 250) 0%, rgb(59 130 246) 100%);
+  opacity: 0;
+  transform: scaleY(0.65);
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.6);
+}
+
+.nav-link:hover .nav-indicator,
+.nav-link.active-link .nav-indicator {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.nav-link.active-link {
+  background: linear-gradient(135deg, rgb(30 41 59) 0%, rgb(15 23 42) 100%);
+  color: rgb(255 255 255);
+  border-color: rgb(59 130 246 / 0.5);
+  box-shadow: 0 4px 16px -2px rgba(59, 130, 246, 0.3);
+  transform: translateX(4px);
+}
+
+.nav-link.active-link .nav-icon {
+  background: linear-gradient(135deg, rgb(59 130 246) 0%, rgb(96 165 250) 100%);
+  color: rgb(255 255 255);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.5);
+  transform: scale(1.05);
+}
+
+.nav-link.active-link .nav-icon--accent {
+  background: linear-gradient(135deg, rgb(147 51 234) 0%, rgb(168 85 247) 100%);
+  box-shadow: 0 4px 16px rgba(147, 51, 234, 0.5);
+}
+
+.nav-link.active-link .nav-icon--info {
+  background: linear-gradient(135deg, rgb(56 189 248) 0%, rgb(125 211 252) 100%);
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.5);
+}
+
+.nav-link.active-link .nav-icon--alert {
+  background: linear-gradient(135deg, rgb(244 63 94) 0%, rgb(251 113 133) 100%);
+  box-shadow: 0 4px 16px rgba(244, 63, 94, 0.5);
+}
+
+/* User Menu Dropdown Styling */
+::ng-deep .mat-mdc-menu-panel.user-menu,
+::ng-deep .mat-mdc-menu-panel[class*="user-menu"],
+::ng-deep .cdk-overlay-pane .mat-mdc-menu-panel {
+  background: rgb(15 23 42) !important;
+  border: 1px solid rgb(51 65 85 / 0.5) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(59, 130, 246, 0.1) !important;
+  backdrop-filter: blur(12px) !important;
+  padding: 0.5rem !important;
+  min-width: 200px !important;
+}
+
+::ng-deep .mat-mdc-menu-panel.user-menu .mat-mdc-menu-item,
+::ng-deep .mat-mdc-menu-panel[class*="user-menu"] .mat-mdc-menu-item,
+::ng-deep .cdk-overlay-pane .mat-mdc-menu-panel .mat-mdc-menu-item {
+  color: rgb(203 213 225) !important;
+  border-radius: 0.5rem !important;
+  margin: 0.125rem 0 !important;
+  padding: 0.625rem 1rem !important;
+  transition: all 0.2s ease !important;
+}
+
+::ng-deep .mat-mdc-menu-panel.user-menu .mat-mdc-menu-item:hover,
+::ng-deep .mat-mdc-menu-panel[class*="user-menu"] .mat-mdc-menu-item:hover,
+::ng-deep .cdk-overlay-pane .mat-mdc-menu-panel .mat-mdc-menu-item:hover {
+  background: rgb(30 41 59) !important;
+  color: rgb(255 255 255) !important;
+}
+
+::ng-deep .mat-mdc-menu-panel.user-menu .mat-mdc-menu-item .mat-icon,
+::ng-deep .mat-mdc-menu-panel[class*="user-menu"] .mat-mdc-menu-item .mat-icon,
+::ng-deep .cdk-overlay-pane .mat-mdc-menu-panel .mat-mdc-menu-item .mat-icon {
+  color: rgb(148 163 184) !important;
+  margin-right: 0.75rem !important;
+}
+
+::ng-deep .mat-mdc-menu-panel.user-menu .mat-mdc-menu-item:hover .mat-icon,
+::ng-deep .mat-mdc-menu-panel[class*="user-menu"] .mat-mdc-menu-item:hover .mat-icon,
+::ng-deep .cdk-overlay-pane .mat-mdc-menu-panel .mat-mdc-menu-item:hover .mat-icon {
+  color: rgb(96 165 250) !important;
+}
+
+::ng-deep .mat-mdc-menu-panel.user-menu .mat-divider,
+::ng-deep .mat-mdc-menu-panel[class*="user-menu"] .mat-divider,
+::ng-deep .cdk-overlay-pane .mat-mdc-menu-panel .mat-divider {
+  border-top-color: rgb(51 65 85 / 0.5) !important;
+  margin: 0.5rem 0 !important;
+}
+
+/* User Icon Alignment Fix */
+.user-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-icon-wrapper mat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  margin: 0;
+}
+
+/* Tenant Menu Dropdown Styling */
+::ng-deep .mat-mdc-menu-panel.tenant-menu,
+::ng-deep .mat-mdc-menu-panel[class*="tenant-menu"],
+::ng-deep .cdk-overlay-pane .mat-mdc-menu-panel.tenant-menu {
+  background: rgb(15 23 42) !important;
+  border: 1px solid rgb(51 65 85 / 0.5) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(59, 130, 246, 0.1) !important;
+  backdrop-filter: blur(12px) !important;
+  padding: 0.5rem !important;
+  min-width: 200px !important;
+}
+
+::ng-deep .mat-mdc-menu-panel.tenant-menu .mat-mdc-menu-item,
+::ng-deep .mat-mdc-menu-panel[class*="tenant-menu"] .mat-mdc-menu-item,
+::ng-deep .cdk-overlay-pane .mat-mdc-menu-panel.tenant-menu .mat-mdc-menu-item {
+  color: rgb(203 213 225) !important;
+  border-radius: 0.5rem !important;
+  margin: 0.125rem 0 !important;
+  padding: 0.625rem 1rem !important;
+  transition: all 0.2s ease !important;
+}
+
+::ng-deep .mat-mdc-menu-panel.tenant-menu .mat-mdc-menu-item:hover,
+::ng-deep .mat-mdc-menu-panel[class*="tenant-menu"] .mat-mdc-menu-item:hover,
+::ng-deep .cdk-overlay-pane .mat-mdc-menu-panel.tenant-menu .mat-mdc-menu-item:hover {
+  background: rgb(30 41 59) !important;
+  color: rgb(255 255 255) !important;
+}
+
+::ng-deep .mat-mdc-menu-panel.tenant-menu .mat-mdc-menu-item.menu-item-selected,
+::ng-deep .mat-mdc-menu-panel[class*="tenant-menu"] .mat-mdc-menu-item.menu-item-selected,
+::ng-deep .cdk-overlay-pane .mat-mdc-menu-panel.tenant-menu .mat-mdc-menu-item.menu-item-selected {
+  background: rgb(30 41 59) !important;
+  color: rgb(96 165 250) !important;
+}
+
+/* Center align arrows in dropdowns */
+button[matMenuTriggerFor] mat-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Ensure consistent spacing in header dropdowns */
+button[matMenuTriggerFor] {
+  display: flex !important;
+  align-items: center !important;
+}
+
+button[matMenuTriggerFor] span {
+  display: flex !important;
+  align-items: center !important;
+}
+
+@media (max-width: 960px) {
+  .nav-link .nav-caret {
+    display: none;
   }
+}

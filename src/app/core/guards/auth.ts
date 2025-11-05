@@ -4,6 +4,7 @@ import {
   Router,
   ActivatedRouteSnapshot,
   RouterStateSnapshot,
+  UrlTree,
 } from '@angular/router';
 import { signal, computed, inject } from '@angular/core';
 import { AuthUser, DemoUser, UserRole } from '../../shared/models/dashboard.models';
@@ -14,10 +15,18 @@ import { isPlatformBrowser } from '@angular/common';
 })
 export class AuthGuard {
   private platformId = inject(PLATFORM_ID);
-  private isBrowser = isPlatformBrowser(this.platformId);
 
   private currentUser = signal<AuthUser | null>(null);
   private isAuthenticated = signal<boolean>(false);
+  private isInitialized = signal<boolean>(false);
+
+  /**
+   * Check if we're in the browser environment
+   * Check this fresh each time to handle SSR/hydration correctly
+   */
+  // private get isBrowser(): boolean {
+  //   return isPlatformBrowser(this.platformId);
+  // }
 
   // Demo users for development
   private demoUsers: DemoUser[] = [
@@ -46,6 +55,7 @@ export class AuthGuard {
 
   readonly currentUser$ = this.currentUser.asReadonly();
   readonly isAuthenticated$ = this.isAuthenticated.asReadonly();
+  readonly isInitialized$ = this.isInitialized.asReadonly();
 
   readonly hasAdminRole = computed(() => {
     const user = this.currentUser();
@@ -67,8 +77,66 @@ export class AuthGuard {
   });
 
   constructor(private router: Router) {
-    // Check if token exists in localStorage from previous session
-    this.loadStoredSession();
+    // Initialize session synchronously
+    this.initialize();
+  }
+
+  /**
+   * Initialize session from localStorage
+   * Can be called multiple times safely (idempotent)
+   * During SSR/hydration, we need to reload on client even if marked as initialized on server
+   */
+  initialize(): void {
+    const isBrowser = isPlatformBrowser(this.platformId);
+    const wasInitialized = this.isInitialized();
+    const wasAuthenticated = this.isAuthenticated();
+    
+    console.log('[AuthGuard.initialize] Called:', {
+      isBrowser,
+      wasInitialized,
+      wasAuthenticated,
+      localStorageAvailable: typeof window !== 'undefined' && typeof localStorage !== 'undefined'
+    });
+    
+    // Always try to load session if we're in the browser
+    // This handles SSR/hydration where initialization happened on server (no localStorage)
+    // but we need to load session from localStorage on the client
+    // Check fresh each time to handle SSR/hydration correctly
+    if (isBrowser) {
+      // Always load session in browser, even if already initialized
+      // This ensures we load from localStorage during hydration
+      // The loadStoredSession method will check localStorage availability
+      console.log('[AuthGuard.initialize] Loading stored session...');
+      this.loadStoredSession();
+      
+      const afterLoad = this.isAuthenticated();
+      console.log('[AuthGuard.initialize] After loadStoredSession:', {
+        authenticated: afterLoad,
+        hasUser: !!this.currentUser()
+      });
+      
+      // During hydration, localStorage might not be immediately accessible
+      // Try multiple times with a small delay if needed
+      if (!afterLoad && typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+        console.log('[AuthGuard.initialize] Not authenticated, scheduling async retry...');
+        // Give it a microtask to ensure localStorage is fully ready
+        Promise.resolve().then(() => {
+          if (!this.isAuthenticated()) {
+            console.log('[AuthGuard.initialize] Async retry: Loading stored session again...');
+            this.loadStoredSession();
+            console.log('[AuthGuard.initialize] Async retry result:', {
+              authenticated: this.isAuthenticated(),
+              hasUser: !!this.currentUser()
+            });
+          }
+        });
+      }
+    }
+    
+    // Mark as initialized AFTER attempting to load session
+    // This ensures signals are set before any guards check them
+    this.isInitialized.set(true);
+    console.log('[AuthGuard.initialize] Initialization complete');
   }
 
 
@@ -112,7 +180,7 @@ export class AuthGuard {
     this.isAuthenticated.set(true);
 
     // Persist to localStorage (only in browser)
-    if (this.isBrowser) {
+    if (isPlatformBrowser(this.platformId) && typeof localStorage !== 'undefined') {
       localStorage.setItem('auth_user', JSON.stringify(authUser));
     }
 
@@ -126,7 +194,7 @@ export class AuthGuard {
     this.currentUser.set(null);
     this.isAuthenticated.set(false);
 
-    if (this.isBrowser) {
+    if (isPlatformBrowser(this.platformId) && typeof localStorage !== 'undefined') {
       localStorage.removeItem('auth_user');
     }
 
@@ -151,19 +219,59 @@ export class AuthGuard {
 
   /**
  * Load user session from localStorage
+ * Safe to call during SSR (will do nothing)
  */
   private loadStoredSession(): void {
-    if (!this.isBrowser) return;
+    // Check fresh each time to handle SSR/hydration correctly
+    if (!isPlatformBrowser(this.platformId)) {
+      console.log('[AuthGuard.loadStoredSession] Not in browser, skipping');
+      return;
+    }
+    
+    // Double-check localStorage is available (safety check for hydration)
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      console.log('[AuthGuard.loadStoredSession] localStorage not available');
+      return;
+    }
+    
     try {
       const stored = localStorage.getItem('auth_user');
+      console.log('[AuthGuard.loadStoredSession] localStorage item:', stored ? 'EXISTS' : 'NOT FOUND');
+      
       if (stored) {
         const user = JSON.parse(stored) as AuthUser;
-        this.currentUser.set(user);
-        this.isAuthenticated.set(true);
+        console.log('[AuthGuard.loadStoredSession] Parsed user:', {
+          hasId: !!user?.id,
+          hasEmail: !!user?.email,
+          hasRoles: !!user?.roles,
+          rolesArray: Array.isArray(user?.roles),
+          email: user?.email
+        });
+        
+        // Validate user structure
+        if (user && user.id && user.email && user.roles && Array.isArray(user.roles)) {
+          this.currentUser.set(user);
+          this.isAuthenticated.set(true);
+          console.log('[AuthGuard.loadStoredSession] Session loaded successfully');
+          
+          // If token is expired, refresh it
+          if (!this.isTokenValid()) {
+            console.log('[AuthGuard.loadStoredSession] Token expired, refreshing...');
+            this.refreshToken();
+          }
+        } else {
+          // Invalid user data, clear it
+          console.warn('[AuthGuard.loadStoredSession] Invalid user data in localStorage, clearing...');
+          localStorage.removeItem('auth_user');
+        }
+      } else {
+        console.log('[AuthGuard.loadStoredSession] No stored session found');
       }
     } catch (error) {
-      console.error('Error loading stored session:', error);
-      localStorage.removeItem('auth_user');
+      console.error('[AuthGuard.loadStoredSession] Error loading stored session:', error);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('auth_user');
+      }
     }
   }
 
@@ -185,6 +293,19 @@ export class AuthGuard {
   }
 
   /**
+   * Refresh token for stored sessions
+   */
+  refreshToken(): void {
+    const user = this.currentUser();
+    if (user && isPlatformBrowser(this.platformId) && typeof localStorage !== 'undefined') {
+      const newToken = this.generateMockToken(user.id);
+      const updatedUser = { ...user, token: newToken };
+      this.currentUser.set(updatedUser);
+      localStorage.setItem('auth_user', JSON.stringify(updatedUser));
+    }
+  }
+
+  /**
    * Verify if token is valid
    */
   isTokenValid(): boolean {
@@ -203,38 +324,93 @@ export class AuthGuard {
   }
 }
 
+/**
+ * Route guard for protected routes (requires authentication)
+ */
 export const authGuard: CanActivateFn = (
   route: ActivatedRouteSnapshot,
   state: RouterStateSnapshot
-) => {
-  const authGuard = inject(AuthGuard);
+): boolean | UrlTree => {
+  console.log('[authGuard] ===== GUARD CALLED =====');
+  console.log('[authGuard] Route path:', route.routeConfig?.path);
+  console.log('[authGuard] Full URL:', state.url);
+  console.log('[authGuard] Route data:', route.data);
+  
+  const authGuardService = inject(AuthGuard);
   const router = inject(Router);
-  console.log('authGuard', authGuard.isAuthenticated$());
-  // Check if user is authenticated
-  if (!authGuard.isAuthenticated$()) {
-    router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
-    return false;
+  
+  // CRITICAL: Check if we're in browser
+  const isBrowser = typeof window !== 'undefined' && typeof localStorage !== 'undefined';
+  
+  if (!isBrowser) {
+    console.log('[authGuard] Running on server - blocking route (no localStorage on server)');
+    // On server, block the route to prevent SSR from rendering protected content
+    // Return UrlTree for immediate redirect - this prevents flash
+    return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
   }
+  
+  // CRITICAL: Check localStorage synchronously FIRST before any async operations
+  // This prevents flash of content - if no auth_user exists, block immediately
+  try {
+    const hasStoredSession = localStorage.getItem('auth_user') !== null;
+    console.log('[authGuard] Has stored session in localStorage:', hasStoredSession);
+    
+    if (!hasStoredSession) {
+      // No stored session - redirect immediately using UrlTree to prevent flash
+      console.log('[authGuard] No stored session - Redirecting immediately');
+      return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
+    }
+    
+    // Stored session exists - ensure initialization happens synchronously
+    console.log('[authGuard] Stored session exists - initializing...');
+    authGuardService.initialize();
+    
+    // CRITICAL: Check authentication state immediately after initialization
+    // Don't wait - these are synchronous signal reads
+    const isInitialized = authGuardService.isInitialized$();
+    const isAuthenticated = authGuardService.isAuthenticated$();
+    const user = authGuardService.currentUser$();
+    
+    console.log('[authGuard] State after initialize:', {
+      isInitialized,
+      isAuthenticated,
+      hasUser: !!user,
+      userEmail: user?.email
+    });
+    
+    // If not initialized yet, block (shouldn't happen after initialize() call)
+    if (!isInitialized) {
+      console.log('[authGuard] NOT INITIALIZED - Redirecting');
+      return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
+    }
+    
+    // CRITICAL: Check if user is authenticated - if not, redirect immediately
+    // This must be synchronous to prevent flash
+    if (!isAuthenticated || !user) {
+      console.log('[authGuard] NOT AUTHENTICATED - Redirecting to /login');
+      return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
+    }
 
-  // Check token validity
-  if (!authGuard.isTokenValid()) {
-    authGuard.logout();
-    return false;
+    // Check token validity - if expired, regenerate token for stored sessions
+    if (!authGuardService.isTokenValid()) {
+      console.log('[authGuard] Token invalid, refreshing...');
+      authGuardService.refreshToken();
+    }
+
+    // Check role-based access
+    const requiredRoles = route.data['roles'] as UserRole[] | undefined;
+    if (requiredRoles && requiredRoles.length > 0 && !authGuardService.hasAccess(requiredRoles)) {
+      console.log('[authGuard] Insufficient permissions - Redirecting to /unauthorized');
+      return router.createUrlTree(['/unauthorized']);
+    }
+
+    console.log('[authGuard] Access GRANTED');
+    return true;
+  } catch (error) {
+    console.error('[authGuard] Error checking authentication:', error);
+    // If there's any error, redirect for security
+    return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
   }
-
-  const requiredRoles = route.data['roles'] as UserRole[] | undefined;
-
-  if (!authGuard.currentUser$()) {
-    inject(Router).navigate(['/login']);
-    return false;
-  }
-
-  if (requiredRoles && !authGuard.hasAccess(requiredRoles)) {
-    inject(Router).navigate(['/unauthorized']);
-    return false;
-  }
-
-  return true;
 };
 
 /**
@@ -242,15 +418,68 @@ export const authGuard: CanActivateFn = (
  */
 export const publicGuard: CanActivateFn = (
   _route: ActivatedRouteSnapshot,
-  _state: RouterStateSnapshot
-) => {
-  const authGuard = inject(AuthGuard);
+  state: RouterStateSnapshot
+): boolean | UrlTree => {
+  console.log('[publicGuard] ===== GUARD CALLED =====');
+  console.log('[publicGuard] URL:', state.url);
+  
+  const authGuardService = inject(AuthGuard);
   const router = inject(Router);
 
-  if (authGuard.isAuthenticated$()) {
-    router.navigate(['/dashboard/view']);
-    return false;
+  // CRITICAL: Check if we're in browser
+  const isBrowser = typeof window !== 'undefined' && typeof localStorage !== 'undefined';
+  
+  if (!isBrowser) {
+    console.log('[publicGuard] Running on server - allowing route (will be checked on client)');
+    // On server, allow public routes to pass
+    return true;
   }
 
+  // CRITICAL: Check localStorage synchronously FIRST
+  const hasStoredSession = localStorage.getItem('auth_user') !== null;
+  console.log('[publicGuard] Has stored session:', hasStoredSession);
+  
+  // If no stored session, allow access to public route immediately
+  if (!hasStoredSession) {
+    console.log('[publicGuard] No stored session - Allowing public route');
+    return true;
+  }
+
+  // Stored session exists - ensure initialization happens synchronously
+  console.log('[publicGuard] Stored session exists - checking authentication...');
+  authGuardService.initialize();
+
+  // CRITICAL: Check authentication state immediately after initialization
+  // These are synchronous signal reads - no waiting needed
+  const isInitialized = authGuardService.isInitialized$();
+  const isAuthenticated = authGuardService.isAuthenticated$();
+  const user = authGuardService.currentUser$();
+  
+  console.log('[publicGuard] State:', {
+    isInitialized,
+    isAuthenticated,
+    hasUser: !!user,
+    userEmail: user?.email
+  });
+  
+  // If not initialized yet, allow (will check on next navigation)
+  if (!isInitialized) {
+    console.log('[publicGuard] NOT INITIALIZED - Allowing (will check on next navigation)');
+    return true;
+  }
+
+  // CRITICAL: If already authenticated, redirect immediately using UrlTree
+  // This prevents any flash of the login page
+  if (isAuthenticated && user) {
+    // Check if there's a returnUrl in the query params
+    const urlTree = router.parseUrl(state.url);
+    const returnUrl = urlTree.queryParams['returnUrl'];
+    const targetUrl = returnUrl || '/dashboard/view';
+    console.log('[publicGuard] Already authenticated - Redirecting to:', targetUrl);
+    // Use UrlTree for immediate redirect without flash
+    return router.createUrlTree([targetUrl]);
+  }
+
+  console.log('[publicGuard] Access GRANTED (public route)');
   return true;
 };

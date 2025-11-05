@@ -3,6 +3,9 @@ import { authGuard, publicGuard } from './core/guards/auth';
 import { DashboardLayout } from './layouts/dashboard-layout';
 import { LoginPage } from './pages/login/login';
 import { UnauthorizedPage } from './pages/unauthorized';
+import { MetricsViewPage } from './pages/metrics-view';
+import { CustomizeDashboardPage } from './pages/customize-dashboard';
+import { AlertsPage } from './pages/alerts';
 
 export const routes: Routes = [
     {
@@ -18,41 +21,45 @@ export const routes: Routes = [
     {
         path: 'dashboard',
         component: DashboardLayout,
-        canActivate: [authGuard],
+        canActivate: [authGuard], // Protect parent route - prevents redirect to login before child guard runs
         children: [
             {
+                path: '',
+                redirectTo: 'view',
+                pathMatch: 'full',
+            },
+            {
                 path: 'view',
-                loadComponent: () =>
-                    import('./pages/metrics-view').then(m => m.MetricsViewPage),
+                component: MetricsViewPage,
+                canActivate: [authGuard], // Explicitly protect child routes
                 data: { roles: [] } // Everyone can view metrics
             },
             {
                 path: 'customize',
-                loadComponent: () =>
-                    import('./pages/customize-dashboard').then(m => m.CustomizeDashboardPage),
+                component: CustomizeDashboardPage,
+                canActivate: [authGuard], // Explicitly protect child routes
                 data: { roles: ['admin', 'tenant-user'] }
             },
             {
                 path: 'alerts',
-                loadComponent: () =>
-                    import('./pages/alerts').then(m => m.AlertsPage),
+                component: AlertsPage,
+                canActivate: [authGuard], // Explicitly protect child routes
                 data: { roles: [] }
             }
         ]
     },
     {
         path: 'admin/metrics',
-        loadComponent: () =>
-            import('./pages/metrics-view').then(m => m.MetricsViewPage),
+        component: MetricsViewPage,
         canActivate: [authGuard],
         data: { roles: ['admin'] }
     },
     {
         path: 'unauthorized',
         component: UnauthorizedPage,
-      },
-      {
+    },
+    {
         path: '**',
         redirectTo: '/login', // Redirect unknown routes to login
-      },
+    },
 ];
